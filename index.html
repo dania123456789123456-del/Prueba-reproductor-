@@ -398,8 +398,31 @@ html,body { height:100%; overflow:hidden; font-family:'DM Sans',sans-serif; back
 /* ═══════════════ PLAYER ═══════════════ */
 #L-player { z-index:300; background:#000; }
 
+/* SUBTITLE OVERLAY */
+#subOverlay {
+  position:absolute; bottom:80px; left:0; right:0;
+  text-align:center; pointer-events:none; z-index:10;
+  padding:0 16px; transition:bottom .2s;
+}
+#subOverlay span {
+  display:inline-block;
+  background:rgba(0,0,0,.82);
+  color:#fff;
+  font-family:'DM Sans',sans-serif;
+  font-size:clamp(14px,3.5vw,22px);
+  font-weight:500;
+  line-height:1.5;
+  padding:4px 12px 5px;
+  border-radius:5px;
+  max-width:90%;
+  white-space:pre-wrap;
+  text-shadow:0 1px 3px rgba(0,0,0,.6);
+  letter-spacing:.01em;
+}
+/* Move subtitle up when controls visible */
+#L-player:not(.ctrls-hidden) #subOverlay { bottom:86px; }
+
 #vid { width:100%; height:100%; object-fit:fill; background:#000; display:block; }
-#vid.contain { object-fit:contain; }
 
 .p-spin {
   position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
@@ -682,6 +705,7 @@ html,body { height:100%; overflow:hidden; font-family:'DM Sans',sans-serif; back
 <!-- ██ LAYER 4 – PLAYER ██ -->
 <div class="layer off" id="L-player">
   <video id="vid" playsinline webkit-playsinline></video>
+  <div id="subOverlay"></div>
   <div class="p-spin" id="pSpin"></div>
   <div class="p-tap-anim" id="tapAnim">
     <svg width="30" height="30" fill="white" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
@@ -1175,18 +1199,162 @@ function openPlayer(url, title, qualities, subtitles){
 function loadVideo(url){
   const v=$('vid');
   $('pSpin').classList.add('on');
+  Sub.stop();
   if(S.hls){ S.hls.destroy(); S.hls=null; }
   if(!url){ $('pSpin').classList.remove('on'); toast('⚠ URL no configurada en el JSON'); return; }
   if(Hls.isSupported() && /m3u8/i.test(url)){
-    const h = new Hls({enableWorker:true});
-    h.loadSource(url); h.attachMedia(v);
-    h.on(Hls.Events.MANIFEST_PARSED,()=>{ v.play().catch(()=>{}); $('pSpin').classList.remove('on'); });
-    h.on(Hls.Events.ERROR,(_,d)=>{ if(d.fatal) $('pSpin').classList.remove('on'); });
+    const h = new Hls({
+      enableWorker: true,
+      // ── Fixes audio distortion / stutter on HLS ──
+      maxBufferLength: 30,
+      maxMaxBufferLength: 90,
+      maxBufferSize: 60*1000*1000,
+      maxBufferHole: 0.5,
+      lowLatencyMode: false,
+      backBufferLength: 30,
+      // Audio fixes
+      audioPreloadCount: 2,
+      startLevel: -1,        // auto quality
+      abrEwmaDefaultEstimate: 500000,
+    });
+    h.loadSource(url);
+    h.attachMedia(v);
+    h.on(Hls.Events.MANIFEST_PARSED,()=>{
+      v.play().catch(()=>{});
+      $('pSpin').classList.remove('on');
+    });
+    h.on(Hls.Events.ERROR,(_,d)=>{
+      if(d.fatal){
+        $('pSpin').classList.remove('on');
+        if(d.type===Hls.ErrorTypes.NETWORK_ERROR) h.startLoad();
+        else if(d.type===Hls.ErrorTypes.MEDIA_ERROR) h.recoverMediaError();
+      }
+    });
     S.hls=h;
   } else {
     v.src=url; v.load(); v.play().catch(()=>{});
+    $('pSpin').classList.remove('on');
   }
   updPlayBtn();
+}
+
+/* ═══════════════════════════════════════
+   SUBTITLE ENGINE (VTT + SRT, funciona en móvil)
+═══════════════════════════════════════ */
+const Sub = {
+  cues:    [],    // [{start, end, text}]
+  blobUrl: null,  // cleanup
+  raf:     null,
+  enabled: false,
+
+  // ─ Parse timestamps ─
+  timeToSec(t){
+    // HH:MM:SS,mmm or HH:MM:SS.mmm or MM:SS.mmm
+    t = t.trim().replace(',','.');
+    const p = t.split(':');
+    if(p.length===3) return parseFloat(p[0])*3600 + parseFloat(p[1])*60 + parseFloat(p[2]);
+    if(p.length===2) return parseFloat(p[0])*60 + parseFloat(p[1]);
+    return parseFloat(t);
+  },
+
+  // ─ Strip VTT tags <b>, <i>, <c.xxx>, etc ─
+  stripTags(t){ return t.replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&nbsp;/g,' '); },
+
+  // ─ Parse SRT ─
+  parseSRT(txt){
+    const cues=[];
+    const blocks = txt.replace(/\r\n/g,'\n').replace(/\r/g,'\n').trim().split(/\n\n+/);
+    for(const b of blocks){
+      const lines = b.split('\n').filter(l=>l.trim());
+      if(lines.length<2) continue;
+      // skip index line if present
+      const ti = lines.findIndex(l=>l.includes('-->'));
+      if(ti<0) continue;
+      const [s,e] = lines[ti].split('-->');
+      const text  = lines.slice(ti+1).map(l=>this.stripTags(l)).join('\n');
+      if(text) cues.push({start:this.timeToSec(s), end:this.timeToSec(e), text});
+    }
+    return cues;
+  },
+
+  // ─ Parse VTT ─
+  parseVTT(txt){
+    const cues=[];
+    const blocks = txt.replace(/\r\n/g,'\n').replace(/\r/g,'\n').trim().split(/\n\n+/);
+    for(const b of blocks){
+      if(b.startsWith('WEBVTT')||b.startsWith('NOTE')||b.startsWith('STYLE')||b.startsWith('REGION')) continue;
+      const lines = b.split('\n').filter(l=>l.trim());
+      const ti = lines.findIndex(l=>l.includes('-->'));
+      if(ti<0) continue;
+      const arrow = lines[ti].split('-->');
+      const s = arrow[0].trim();
+      const e = (arrow[1]||'').split(/\s/)[0].trim(); // ignore position tags
+      const text = lines.slice(ti+1).map(l=>this.stripTags(l)).join('\n');
+      if(text) cues.push({start:this.timeToSec(s), end:this.timeToSec(e), text});
+    }
+    return cues;
+  },
+
+  // ─ Load subtitle from URL ─
+  async load(url, label){
+    this.stop();
+    this.cues=[];
+    $('subOverlay').innerHTML='';
+    if(!url){ toast('Subtítulos desactivados'); return; }
+
+    toast('⏳ Cargando subtítulos…');
+    try{
+      // Fetch with cache-busting to avoid stale files on GitHub
+      const res = await fetch(url, {cache:'no-cache'});
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      const txt  = await res.text();
+      const isVTT = url.toLowerCase().includes('.vtt') || txt.trimStart().startsWith('WEBVTT');
+      this.cues = isVTT ? this.parseVTT(txt) : this.parseSRT(txt);
+      if(!this.cues.length) throw new Error('Sin cues encontradas');
+      this.enabled = true;
+      this.start();
+      toast(`✅ Subtítulos: ${label||'cargados'} (${this.cues.length} líneas)`);
+    }catch(e){
+      toast('⚠ Error subtítulos: '+e.message);
+      console.warn('Sub error:',e);
+    }
+  },
+
+  // ─ Render loop ─
+  start(){
+    const v=$('vid'), el=$('subOverlay');
+    let lastTxt='';
+    const tick=()=>{
+      if(!this.enabled){ el.innerHTML=''; return; }
+      const t = v.currentTime;
+      const cue = this.cues.find(c=> t>=c.start && t<=c.end);
+      const txt = cue? cue.text : '';
+      if(txt!==lastTxt){
+        el.innerHTML = txt? `<span>${txt}</span>` : '';
+        lastTxt=txt;
+      }
+      this.raf=requestAnimationFrame(tick);
+    };
+    this.raf=requestAnimationFrame(tick);
+  },
+
+  stop(){
+    this.enabled=false;
+    if(this.raf){ cancelAnimationFrame(this.raf); this.raf=null; }
+    const el=$('subOverlay'); if(el) el.innerHTML='';
+  }
+};
+
+function buildSubtitles(subs){
+  Sub.stop();
+  S.currentSubs = subs; // store for later picking
+  if(!subs.length){
+    $('subList').innerHTML=`<div class="pop-item" style="color:var(--mute);font-size:12px;padding:10px 13px;">Sin subtítulos en el JSON</div>`;
+    return;
+  }
+  $('subList').innerHTML =
+    `<div class="pop-item sel" onclick="pickSub(-1)"><span>Desactivar</span><div class="pop-dot"></div></div>`+
+    subs.map((s,i)=>`<div class="pop-item" onclick="pickSub(${i})"><span>${s.label}</span><div class="pop-dot"></div></div>`).join('');
 }
 
 function buildQualities(curUrl, qs){
@@ -1205,25 +1373,18 @@ function pickQuality(idx, url){
   closePopups();
 }
 
-function buildSubtitles(subs){
-  const v=$('vid');
-  while(v.firstChild) v.removeChild(v.firstChild);
-  if(!subs.length){ $('subList').innerHTML=`<div class="pop-item" style="color:var(--mute)">Sin subtítulos</div>`; return; }
-  $('subList').innerHTML=`<div class="pop-item sel" onclick="pickSub(-1)"><span>Desactivar</span><div class="pop-dot"></div></div>`
-    +subs.map((s,i)=>`<div class="pop-item" onclick="pickSub(${i})"><span>${s.label}</span><div class="pop-dot"></div></div>`).join('');
-  subs.forEach((s,i)=>{ const t=document.createElement('track'); t.kind='subtitles'; t.label=s.label; t.srclang=s.lang||'es'; t.src=s.url; v.appendChild(t); });
-}
 
-function pickSub(idx){
-  const v=$('vid');
-  for(let i=0;i<v.textTracks.length;i++) v.textTracks[i].mode='disabled';
-  document.querySelectorAll('#subList .pop-item').forEach((el,i)=>el.classList.toggle('sel',i===idx+1));
-  if(idx>=0 && v.textTracks[idx]) v.textTracks[idx].mode='showing';
+async function pickSub(idx){
+document.querySelectorAll('#subList .pop-item').forEach((el,i)=>el.classList.toggle('sel',i===idx+1));
   closePopups();
+  if(idx<0){ Sub.stop(); toast('Subtítulos desactivados'); return; }
+  const s = (S.currentSubs||[])[idx];
+  if(s) await Sub.load(s.url, s.label);
 }
 
 function closePlayer(){
   const v=$('vid'); v.pause(); v.src='';
+  Sub.stop();
   if(S.hls){ S.hls.destroy(); S.hls=null; }
   if(document.fullscreenElement) document.exitFullscreen();
   screen.orientation?.unlock?.();
