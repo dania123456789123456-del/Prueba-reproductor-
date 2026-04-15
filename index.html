@@ -102,44 +102,82 @@ html,body { height:100%; overflow:hidden; font-family:'DM Sans',sans-serif; back
 /* ═══════════════ LOGIN ═══════════════ */
 #L-login {
   display:flex; align-items:center; justify-content:center;
-  background: radial-gradient(ellipse 100% 60% at 50% 100%, #2e1065 0%, var(--ink) 65%);
+  background: radial-gradient(ellipse 120% 80% at 50% 110%, #2e1065 0%, var(--ink) 60%);
   overflow:hidden;
 }
 
 .stars-canvas { position:absolute; inset:0; pointer-events:none; }
 
 .film-strip {
-  position:absolute; bottom:0; left:0; right:0; height:90px;
+  position:absolute; bottom:0; left:0; right:0; height:80px;
   background: repeating-linear-gradient(90deg, transparent 0px, transparent 80px, rgba(138,92,246,.06) 80px, rgba(138,92,246,.06) 90px);
   border-top:1px solid rgba(138,92,246,.12);
   display:flex; align-items:center; padding:0 20px; gap:14px; overflow:hidden;
 }
-.film-hole { width:50px; height:36px; border:2px solid rgba(138,92,246,.15); border-radius:5px; flex-shrink:0; }
+.film-hole { width:50px; height:32px; border:2px solid rgba(138,92,246,.15); border-radius:5px; flex-shrink:0; }
 
+/* ── Horizontal card (landscape / WebView) ── */
 .login-card {
   position:relative; z-index:2;
-  background: rgba(18,17,42,0.92);
-  backdrop-filter:blur(24px);
+  background: rgba(18,17,42,0.94);
+  backdrop-filter:blur(28px);
   border:1px solid var(--border);
-  border-radius:24px;
-  padding:44px 38px 38px;
-  width:400px; max-width:94vw;
-  box-shadow: 0 0 0 1px rgba(138,92,246,.08), 0 32px 72px rgba(0,0,0,.6), 0 0 80px rgba(138,92,246,.12);
+  border-radius:22px;
+  padding:32px 36px;
+  width:min(700px, 92vw);
+  display:flex; align-items:center; gap:36px;
+  box-shadow: 0 0 0 1px rgba(138,92,246,.08), 0 28px 64px rgba(0,0,0,.65), 0 0 80px rgba(138,92,246,.14);
+}
+
+.login-left {
+  display:flex; flex-direction:column; align-items:center;
+  flex-shrink:0; width:160px;
+}
+
+.login-right {
+  flex:1; display:flex; flex-direction:column; gap:0;
+}
+
+/* Divider between left and right */
+.login-left::after {
+  content:''; display:block; width:1px; height:0; /* handled by gap */
+}
+
+.login-card::before {
+  content:''; position:absolute; left:50%; top:20%; bottom:20%;
+  width:1px; background:rgba(138,92,246,.18); pointer-events:none;
 }
 
 .login-logo {
-  width:62px; height:62px; border-radius:18px;
+  width:58px; height:58px; border-radius:16px;
   background:linear-gradient(135deg, var(--v), var(--pink));
-  display:flex; align-items:center; justify-content:center; font-size:26px;
-  margin:0 auto 18px;
+  display:flex; align-items:center; justify-content:center; font-size:24px;
+  margin-bottom:14px;
   box-shadow:0 8px 28px rgba(138,92,246,.45);
   animation:logoPulse 3s ease-in-out infinite;
 }
 @keyframes logoPulse { 0%,100%{box-shadow:0 8px 28px rgba(138,92,246,.45)} 50%{box-shadow:0 8px 42px rgba(232,121,249,.55)} }
 
-.login-h { font-family:'Outfit',sans-serif; font-size:28px; font-weight:900; text-align:center; margin-bottom:4px;
+.login-h { font-family:'Outfit',sans-serif; font-size:24px; font-weight:900; text-align:center; margin-bottom:5px;
   background:linear-gradient(135deg,#fff 30%,var(--vl)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-.login-sub { text-align:center; color:var(--mute); font-size:13px; margin-bottom:30px; }
+.login-sub { text-align:center; color:var(--mute); font-size:11px; line-height:1.5; }
+
+/* ── Spinner small inside button ── */
+.spin-sm {
+  display:inline-block; width:13px; height:13px;
+  border:2px solid rgba(255,255,255,.3); border-top-color:#fff;
+  border-radius:50%; animation:spin .6s linear infinite; vertical-align:middle; margin-right:6px;
+}
+
+/* ── Vertical fallback (portrait / small screens) ── */
+@media(max-width:540px) or (orientation:portrait) {
+  .login-card {
+    flex-direction:column; width:92vw; padding:32px 24px 28px; gap:18px;
+  }
+  .login-left { width:100%; }
+  .login-card::before { display:none; }
+  .login-logo { margin-bottom:12px; }
+}
 
 .fgrp { margin-bottom:14px; }
 .fgrp label { display:block; font-size:12px; font-weight:600; color:var(--mute); margin-bottom:6px; letter-spacing:.5px; text-transform:uppercase; }
@@ -304,6 +342,11 @@ html,body { height:100%; overflow:hidden; font-family:'DM Sans',sans-serif; back
   opacity:0; transition:all .25s; box-shadow:0 0 20px rgba(138,92,246,.5);
 }
 .pcard:hover .pcard-play { opacity:1; transform:translate(-50%,-50%) scale(1); }
+
+/* ── Keyboard focus styles ── */
+:focus-visible { outline:2px solid var(--v); outline-offset:2px; }
+.cbtn:focus-visible { outline:2px solid #fff; }
+.s-item:focus-visible { outline:2px solid var(--v); }
 .pcard-play svg { width:18px; height:18px; fill:#fff; margin-left:3px; }
 
 .pcard-type {
@@ -315,6 +358,16 @@ html,body { height:100%; overflow:hidden; font-family:'DM Sans',sans-serif; back
   position:absolute; top:8px; right:8px; font-size:10px; font-weight:700;
   background:rgba(0,0,0,.7); backdrop-filter:blur(8px); color:var(--gold);
   padding:3px 7px; border-radius:6px; display:flex; align-items:center; gap:2px;
+}
+
+.pcard-prog {
+  position:absolute; bottom:0; left:0; right:0; height:3px;
+  background:rgba(255,255,255,.12); z-index:2;
+}
+.pcard-prog-fill {
+  height:100%;
+  background:linear-gradient(to right,var(--v),var(--pink));
+  border-radius:0 2px 2px 0; transition:width .3s;
 }
 
 .skel {
@@ -618,25 +671,23 @@ html,body { height:100%; overflow:hidden; font-family:'DM Sans',sans-serif; back
   <canvas class="stars-canvas" id="starsCanvas"></canvas>
   <div class="film-strip" id="filmStrip"></div>
   <div class="login-card">
-    <div class="demo-badge">✦ MODO DEMO DISPONIBLE ✦</div>
-    <div class="login-logo">🎬</div>
-    <div class="login-h">CineStream</div>
-    <div class="login-sub">Tu plataforma de streaming personal</div>
-    <div class="fgrp">
-      <label>URL del JSON (GitHub Raw)</label>
-      <input type="url" id="inp-url" placeholder="https://raw.githubusercontent.com/usuario/repo/main/catalogo.json">
-      <div class="fgrp-hint">Deja en blanco para modo demo · <a href="#" onclick="showJsonHelp()">Ver formato del JSON</a></div>
+    <div class="login-left">
+      <div class="login-logo">🎬</div>
+      <div class="login-h" id="loginAppName">CineStream</div>
+      <div class="login-sub">Tu plataforma de streaming personal</div>
     </div>
-    <div class="fgrp">
-      <label>Usuario</label>
-      <input type="text" id="inp-user" placeholder="admin" value="admin">
+    <div class="login-right">
+      <div class="fgrp">
+        <label>Usuario</label>
+        <input type="text" id="inp-user" placeholder="admin" value="admin" autocomplete="username">
+      </div>
+      <div class="fgrp">
+        <label>Contraseña</label>
+        <input type="password" id="inp-pass" placeholder="••••" value="1234" autocomplete="current-password">
+      </div>
+      <button class="btn-enter" id="btn-enter" onclick="doLogin()">▶ Entrar</button>
+      <div class="login-err" id="login-err">⚠ Usuario o contraseña incorrectos</div>
     </div>
-    <div class="fgrp">
-      <label>Contraseña</label>
-      <input type="password" id="inp-pass" placeholder="1234" value="1234">
-    </div>
-    <button class="btn-enter" onclick="doLogin()">▶ Entrar al Cine</button>
-    <div class="login-err" id="login-err">⚠ Usuario o contraseña incorrectos</div>
   </div>
 </div>
 
@@ -684,7 +735,7 @@ html,body { height:100%; overflow:hidden; font-family:'DM Sans',sans-serif; back
 </div>
 
 <!-- ██ LAYER 3 – DETAIL ██ -->
-<div class="layer off" id="L-detail">
+<div class="layer off" id="L-detail" role="dialog" aria-modal="true" aria-labelledby="detTitle">
   <div class="det-box" id="detBox">
     <div class="det-back">
       <img id="detBackImg" src="" alt="" class="det-back-img" onerror="this.src='';this.style.opacity='0'">
@@ -742,13 +793,13 @@ html,body { height:100%; overflow:hidden; font-family:'DM Sans',sans-serif; back
       </div>
     </div>
     <div class="ctrl-row">
-      <button class="cbtn" id="playBtn" onclick="togglePlay()">
+      <button class="cbtn" id="playBtn" onclick="togglePlay()" aria-label="Reproducir/Pausar">
         <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
       </button>
-      <button class="cbtn" onclick="skip(-10)" title="Retroceder 10s">
+      <button class="cbtn" onclick="skip(-10)" title="Retroceder 10s" aria-label="Retroceder 10 segundos">
         <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/><text x="8" y="15.5" font-size="5.5" fill="white" font-family="Outfit,sans-serif" font-weight="800">10</text></svg>
       </button>
-      <button class="cbtn" onclick="skip(10)" title="Adelantar 10s">
+      <button class="cbtn" onclick="skip(10)" title="Adelantar 10s" aria-label="Adelantar 10 segundos">
         <svg viewBox="0 0 24 24"><path d="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z"/><text x="8" y="15.5" font-size="5.5" fill="white" font-family="Outfit,sans-serif" font-weight="800">10</text></svg>
       </button>
       <span class="time-txt" id="timeTxt">0:00 / 0:00</span>
@@ -759,16 +810,16 @@ html,body { height:100%; overflow:hidden; font-family:'DM Sans',sans-serif; back
         </button>
         <input type="range" class="vol-sl" id="volSl" min="0" max="100" value="100" oninput="setVolume(this.value)">
       </div>
-      <button class="cbtn sm" id="subBtn" onclick="togglePopup('sub')" title="Subtítulos">
+      <button class="cbtn sm" id="subBtn" onclick="togglePopup('sub')" title="Subtítulos" aria-label="Subtítulos">
         <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM4 12h2v2H4v-2zm10 6H4v-2h10v2zm6 0h-4v-2h4v2zm0-4H10v-2h10v2z"/></svg>
       </button>
-      <button class="cbtn sm" id="qualBtn" onclick="togglePopup('quality')" title="Calidad">
+      <button class="cbtn sm" id="qualBtn" onclick="togglePopup('quality')" title="Calidad" aria-label="Calidad de video">
         <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
       </button>
-      <button class="cbtn sm" onclick="toggleFill()" id="fillBtn" title="Ajuste de pantalla">
+      <button class="cbtn sm" onclick="toggleFill()" id="fillBtn" title="Ajuste de pantalla" aria-label="Ajuste de pantalla">
         <svg viewBox="0 0 24 24" id="fillIco"><path d="M3 3h7v2H5v5H3V3zm11 0h7v7h-2V5h-5V3zM3 14h2v5h5v2H3v-7zm16 5h-5v2h7v-7h-2v5z"/></svg>
       </button>
-      <button class="cbtn sm" onclick="toggleFs()" id="fsBtn">
+      <button class="cbtn sm" onclick="toggleFs()" id="fsBtn" aria-label="Pantalla completa">
         <svg viewBox="0 0 24 24" id="fsIco"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
       </button>
     </div>
@@ -779,14 +830,26 @@ html,body { height:100%; overflow:hidden; font-family:'DM Sans',sans-serif; back
 /* ═══════════════════════════════════════
    CONFIGURATION
 ═══════════════════════════════════════ */
+/* ╔══════════════════════════════════════════╗
+   ║   ▼▼▼  CONFIGURACIÓN PRINCIPAL  ▼▼▼      ║
+   ╚══════════════════════════════════════════╝ */
 const CFG = {
+  // ── URL de tu catálogo JSON en GitHub Raw ──────────────────────────────
+  // Deja en blanco ('') para usar el modo DEMO con películas de ejemplo
+  jsonUrl: 'https://raw.githubusercontent.com/dania123456789123456-del/Json/refs/heads/main/catalogo.json',
+
+  // ── API Key de TMDB (gratis en themoviedb.org/settings/api) ───────────
+  // Necesaria para pósters, sinopsis y metadatos automáticos
+  tmdbKey: '3ba1079b7db0165cabfc8282f7e5d7ee',
+
+  // ── Credenciales por defecto (si no hay JSON o el JSON no las define) ──
+  defUser: 'admin',
+  defPass: '1234',
+
+  // ── Internos (no modificar) ────────────────────────────────────────────
   tmdbBase: 'https://api.themoviedb.org/3',
   imgW500:  'https://image.tmdb.org/t/p/w500',
   imgW1280: 'https://image.tmdb.org/t/p/w1280',
-  defUser:  'admin',
-  defPass:  '1234',
-  // ▼ PON TU API KEY DE TMDB AQUÍ (gratis en themoviedb.org/settings/api)
-  tmdbKey:  '3ba1079b7db0165cabfc8282f7e5d7ee',
 };
 
 /* ═══════════════════════════════════════
@@ -803,6 +866,68 @@ const S = {
 };
 
 /* ═══════════════════════════════════════
+   HISTORIAL DE REPRODUCCIÓN
+   Guarda posición y progreso en localStorage
+═══════════════════════════════════════ */
+const History = {
+  _key: 'cinestream_history',
+
+  _load(){
+    try{ return JSON.parse(localStorage.getItem(this._key)||'{}'); }
+    catch{ return {}; }
+  },
+
+  _save(data){
+    try{ localStorage.setItem(this._key, JSON.stringify(data)); }catch{}
+  },
+
+  // Guarda posición actual (llamado cada 5s durante reproducción)
+  setProgress(id, currentTime, duration){
+    if(!id||!duration||duration<30) return;
+    const data = this._load();
+    data[id] = {
+      t: Math.floor(currentTime),
+      d: Math.floor(duration),
+      pct: Math.round((currentTime/duration)*100),
+      ts: Date.now()
+    };
+    this._save(data);
+  },
+
+  // Obtiene posición guardada (en segundos)
+  getProgress(id){
+    const d = this._load();
+    return d[id]?.t || 0;
+  },
+
+  // Obtiene % de progreso (para barra en poster)
+  getPct(id){
+    const d = this._load();
+    return d[id]?.pct || 0;
+  },
+
+  // Marca como completado (>90%)
+  isCompleted(id){
+    return this.getPct(id) >= 90;
+  },
+
+  // Borra historial de un item
+  clear(id){
+    const data = this._load();
+    delete data[id];
+    this._save(data);
+  },
+
+  // Obtiene todos los items con progreso, ordenados por reciente
+  getRecent(){
+    const data = this._load();
+    return Object.entries(data)
+      .sort((a,b)=>b[1].ts-a[1].ts)
+      .map(([id,v])=>({id,...v}));
+  }
+};
+
+/* ═══════════════════════════════════════
    STARS CANVAS
 ═══════════════════════════════════════ */
 (function initStars(){
@@ -813,6 +938,7 @@ const S = {
   resize(); addEventListener('resize', resize);
   for(let i=0;i<120;i++) stars.push({x:Math.random(),y:Math.random(),r:Math.random()*1.5+.3,a:Math.random(),da:(.002+Math.random()*.003)*(Math.random()<.5?1:-1)});
   function frame(){
+    if(document.getElementById('L-login').classList.contains('off')){ requestAnimationFrame(frame); return; }
     ctx.clearRect(0,0,c.width,c.height);
     stars.forEach(s=>{
       s.a=Math.max(.05,Math.min(1,s.a+s.da));
@@ -832,15 +958,22 @@ const S = {
    LOGIN
 ═══════════════════════════════════════ */
 async function doLogin(){
-  const url  = document.getElementById('inp-url').value.trim();
+  const url  = CFG.jsonUrl.trim();
   const user = document.getElementById('inp-user').value.trim();
   const pass = document.getElementById('inp-pass').value;
   const err  = document.getElementById('login-err');
+  const btn  = document.getElementById('btn-enter');
   err.style.display = 'none';
 
+  // Loading state
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin-sm"></span> Cargando…';
+
+  const restore = ()=>{ btn.disabled=false; btn.textContent='▶ Entrar'; };
+
   if(!url){ // DEMO MODE
-    if(user!==CFG.defUser || pass!==CFG.defPass){ err.style.display='block'; return; }
-    loadDemoData(); enterApp(); return;
+    if(user!==CFG.defUser || pass!==CFG.defPass){ err.style.display='block'; setTimeout(()=>err.style.display='none',4000); restore(); return; }
+    loadDemoData(); restore(); enterApp(); return;
   }
 
   try{
@@ -849,17 +982,22 @@ async function doLogin(){
     const data = await res.json();
     const vU = data.config?.user || CFG.defUser;
     const vP = data.config?.password || CFG.defPass;
-    if(user!==vU || pass!==vP){ err.style.display='block'; return; }
+    if(user!==vU || pass!==vP){ err.style.display='block'; setTimeout(()=>err.style.display='none',4000); restore(); return; }
     if(data.config?.app_name){
       document.getElementById('appNameLbl').textContent = data.config.app_name;
+      const lbl = document.getElementById('loginAppName');
+      if(lbl) lbl.textContent = data.config.app_name;
       document.title = data.config.app_name;
     }
+    // JSON can also override tmdb_key
+    if(data.config?.tmdb_key) CFG.tmdbKey = data.config.tmdb_key;
     S.movies = data.movies||[];
     S.series = data.series||[];
-    enterApp();
+    restore(); enterApp();
   }catch(e){
     err.textContent = '⚠ Error: '+e.message;
     err.style.display = 'block';
+    restore();
   }
 }
 
@@ -899,6 +1037,7 @@ function goTo(section){
   S.section = section;
   S.searching = false;
   document.getElementById('searchInp').value = '';
+  document.getElementById('main').scrollTo({top:0, behavior:'smooth'});
   ['home','movies','series'].forEach(s=>{
     $('nav-'+s)?.classList.toggle('on', s===section);
   });
@@ -977,7 +1116,21 @@ async function renderHome(){
     </div>`;
   }
 
-  area.innerHTML = heroHtml+`
+  // "Continuar viendo" section
+  const recent = History.getRecent().filter(r=>r.pct>3 && r.pct<90);
+  const recentItems = recent.slice(0,8).map(r=>{
+    const m = S.movies.find(x=>x.id===r.id);
+    const s = S.series.find(x=>x.id===r.id);
+    return m?{...m,type:'movie'}: s?{...s,type:'series'}:null;
+  }).filter(Boolean);
+
+  const continueSection = recentItems.length ? `
+  <div class="c-section">
+    <div class="c-hdr"><div class="c-hdr-lft"><span class="c-hdr-title">▶ Continuar viendo</span><span class="c-count">${recentItems.length}</span></div></div>
+    <div class="grid" id="grid-cont"></div>
+  </div>` : '';
+
+  area.innerHTML = heroHtml + continueSection + `
   <div class="c-section">
     <div class="c-hdr"><div class="c-hdr-lft"><span class="c-hdr-title">🎬 Películas</span><span class="c-count">${S.movies.length}</span></div></div>
     <div class="grid" id="grid-hmov"></div>
@@ -987,6 +1140,7 @@ async function renderHome(){
     <div class="grid" id="grid-hser"></div>
   </div>`;
 
+  if(recentItems.length) renderPosters('grid-cont', recentItems, null);
   renderPosters('grid-hmov', S.movies.slice(0,14), 'movie');
   renderPosters('grid-hser', S.series.slice(0,10), 'series');
 }
@@ -1024,25 +1178,27 @@ async function renderPosters(gridId, items, type){
     const card = $('pc-'+item.id); if(!card) continue;
     let poster=item.poster||'', rt=item.rating||'', yr=item.year||'';
     if(!poster && CFG.tmdbKey && item.tmdb_id){
-      const td = await tmdb(type==='movie'?'movie':'tv', item.tmdb_id);
+      const td = await tmdb((type||item.type)==='movie'?'movie':'tv', item.tmdb_id);
       if(td){
         poster = td.poster_path? CFG.imgW500+td.poster_path:'';
         if(!rt && td.vote_average) rt=td.vote_average.toFixed(1);
         if(!yr){ const df=td.release_date||td.first_air_date; if(df) yr=df.split('-')[0]; }
       }
     }
+    const pct = History.getPct(item.id);
     card.innerHTML=`
       ${poster
         ?`<img src="${poster}" alt="${item.title}" loading="lazy" onerror="this.style.background='linear-gradient(135deg,#1b1935,#2e1065)';this.style.display='block'">`
         :`<div style="width:100%;height:100%;background:linear-gradient(135deg,#1b1935,#2e1065);display:flex;align-items:center;justify-content:center;padding:10px;text-align:center;font-family:Outfit,sans-serif;font-size:13px;font-weight:700;color:#c4b5fd">${item.title}</div>`}
-      <div class="pcard-type">${type==='movie'?'Film':'Serie'}</div>
+      <div class="pcard-type">${(type||item.type)==='movie'?'Film':'Serie'}</div>
       ${rt?`<div class="pcard-rt">★ ${rt}</div>`:''}
       <div class="pcard-overlay">
         <div class="pcard-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
         <div class="pcard-ptitle">${item.title}</div>
         ${yr?`<div class="pcard-pyear">${yr}</div>`:''}
-      </div>`;
-    card.onclick=()=>openDetail(item.id, type);
+      </div>
+      ${pct>0?`<div class="pcard-prog"><div class="pcard-prog-fill" style="width:${pct}%"></div></div>`:''}`;
+    card.onclick=()=>openDetail(item.id, type||item.type);
   }
 }
 
@@ -1190,18 +1346,19 @@ function openPlayer(url, title, qualities, subtitles){
   $('pTitleTxt').textContent = title;
   buildQualities(url, qualities);
   buildSubtitles(subtitles);
-  loadVideo(url);
+  loadVideo(url, S.item?.id);
   showCtrls();
   resetCtrlTimer();
   screen.orientation?.lock('landscape').catch(()=>{});
 }
 
-function loadVideo(url){
+function loadVideo(url, resumeId){
   const v=$('vid');
   $('pSpin').classList.add('on');
   Sub.stop();
   if(S.hls){ S.hls.destroy(); S.hls=null; }
   if(!url){ $('pSpin').classList.remove('on'); toast('⚠ URL no configurada en el JSON'); return; }
+  const savedPos = resumeId ? History.getProgress(resumeId) : 0;
   if(Hls.isSupported() && /m3u8/i.test(url)){
     const h = new Hls({
       enableWorker: true,
@@ -1220,6 +1377,7 @@ function loadVideo(url){
     h.loadSource(url);
     h.attachMedia(v);
     h.on(Hls.Events.MANIFEST_PARSED,()=>{
+      if(savedPos>10){ v.currentTime=savedPos; toast(`▶ Retomando desde ${fmt(savedPos)}`); }
       v.play().catch(()=>{});
       $('pSpin').classList.remove('on');
     });
@@ -1232,7 +1390,11 @@ function loadVideo(url){
     });
     S.hls=h;
   } else {
-    v.src=url; v.load(); v.play().catch(()=>{});
+    v.src=url; v.load();
+    if(savedPos>10){
+      v.addEventListener('loadedmetadata',()=>{ v.currentTime=savedPos; toast(`▶ Retomando desde ${fmt(savedPos)}`); },{once:true});
+    }
+    v.play().catch(()=>{});
     $('pSpin').classList.remove('on');
   }
   updPlayBtn();
@@ -1375,7 +1537,7 @@ function pickQuality(idx, url){
 
 
 async function pickSub(idx){
-document.querySelectorAll('#subList .pop-item').forEach((el,i)=>el.classList.toggle('sel',i===idx+1));
+  document.querySelectorAll('#subList .pop-item').forEach((el,i)=>el.classList.toggle('sel',i===idx+1));
   closePopups();
   if(idx<0){ Sub.stop(); toast('Subtítulos desactivados'); return; }
   const s = (S.currentSubs||[])[idx];
@@ -1474,6 +1636,7 @@ document.addEventListener('touchend',()=>{ dragging=false; });
 (function initVidEvents(){
   const v=$('vid'), pl=$('L-player');
 
+  let _lastSave = 0;
   v.addEventListener('timeupdate',()=>{
     if(!v.duration) return;
     const p=(v.currentTime/v.duration)*100;
@@ -1482,6 +1645,11 @@ document.addEventListener('touchend',()=>{ dragging=false; });
     $('timeTxt').textContent=fmt(v.currentTime)+' / '+fmt(v.duration);
     // Buffer
     if(v.buffered.length){ const b=(v.buffered.end(v.buffered.length-1)/v.duration)*100; $('progBuf').style.width=b+'%'; }
+    // Save progress every 5s
+    if(S.item && v.currentTime - _lastSave > 5){
+      _lastSave = v.currentTime;
+      History.setProgress(S.item.id, v.currentTime, v.duration);
+    }
   });
   v.addEventListener('play',updPlayBtn);
   v.addEventListener('pause',updPlayBtn);
