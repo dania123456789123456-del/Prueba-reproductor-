@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>CineStream</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.12/hls.min.js"></script>
@@ -327,8 +327,8 @@ html,body { height:100%; overflow:hidden; font-family:'DM Sans',sans-serif; back
 #L-detail { z-index:200; background:rgba(0,0,0,.87); backdrop-filter:blur(12px); overflow-y:auto; display:flex; align-items:flex-start; justify-content:center; padding:20px; }
 .det-box { width:100%; max-width:920px; background:var(--ink2); border-radius:20px; overflow:hidden; border:1px solid var(--border); box-shadow:0 40px 90px rgba(0,0,0,.75); margin:auto; }
 
-.det-back { position:relative; height:clamp(200px,38vw,360px); overflow:hidden; }
-.det-back-img { width:100%; height:100%; object-fit:cover; object-position:center top; display:block; }
+.det-back { position:relative; height:clamp(200px,38vw,360px); overflow:hidden; background:linear-gradient(135deg,#1b1935 0%,#2e1065 50%,#1b1935 100%); }
+.det-back-img { width:100%; height:100%; object-fit:cover; object-position:center top; display:block; opacity:0; transition:opacity .5s; }
 .det-back-grad {
   position:absolute; inset:0;
   background:linear-gradient(to top, var(--ink2) 0%, rgba(13,12,30,.6) 40%, rgba(13,12,30,.1) 100%),
@@ -398,7 +398,8 @@ html,body { height:100%; overflow:hidden; font-family:'DM Sans',sans-serif; back
 /* ═══════════════ PLAYER ═══════════════ */
 #L-player { z-index:300; background:#000; }
 
-#vid { width:100%; height:100%; object-fit:contain; background:#000; display:block; }
+#vid { width:100%; height:100%; object-fit:fill; background:#000; display:block; }
+#vid.contain { object-fit:contain; }
 
 .p-spin {
   position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
@@ -537,6 +538,41 @@ html,body { height:100%; overflow:hidden; font-family:'DM Sans',sans-serif; back
   .p-popups { bottom:68px; }
   .p-vid-title { font-size:13px; }
 }
+
+/* Pantallas muy pequeñas (< 360px) – escala todo un poco hacia abajo */
+@media(max-width:359px) {
+  html { font-size:13px; }
+  .grid { grid-template-columns:repeat(auto-fill,minmax(88px,1fr)); gap:7px; }
+  .login-card { padding:32px 20px 28px; }
+  .login-h { font-size:22px; }
+}
+
+/* Pantallas medianas tipo tablet */
+@media(min-width:769px) and (max-width:1024px) {
+  :root { --sw:200px; }
+  .grid { grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); }
+}
+
+/* TV / pantallas grandes (> 1400px) */
+@media(min-width:1400px) {
+  :root { --sw:260px; }
+  html { font-size:17px; }
+  .grid { grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:18px; }
+  .pcard { border-radius:16px; }
+  .topbar { padding:18px 32px; }
+  .c-section { padding:28px 32px; }
+  .hero { height:clamp(320px,40vw,580px); }
+  .det-box { max-width:1100px; }
+  .det-back { height:clamp(280px,35vw,480px); }
+  .ep-card { width:240px; }
+}
+
+/* TV 4K / pantallas muy grandes (> 1900px) */
+@media(min-width:1900px) {
+  html { font-size:20px; }
+  :root { --sw:300px; }
+  .grid { grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:22px; }
+}
 </style>
 </head>
 <body>
@@ -575,11 +611,6 @@ html,body { height:100%; overflow:hidden; font-family:'DM Sans',sans-serif; back
     <div class="fgrp">
       <label>Contraseña</label>
       <input type="password" id="inp-pass" placeholder="1234" value="1234">
-    </div>
-    <div class="fgrp">
-      <label>API Key TMDB <span style="color:var(--mute);font-weight:400">(opcional – mejora carátulas y sinopsis)</span></label>
-      <input type="text" id="inp-tmdb" placeholder="ej: a1b2c3d4e5...">
-      <div class="fgrp-hint">Obtén tu clave gratis en <a href="https://www.themoviedb.org/settings/api" target="_blank">themoviedb.org</a></div>
     </div>
     <button class="btn-enter" onclick="doLogin()">▶ Entrar al Cine</button>
     <div class="login-err" id="login-err">⚠ Usuario o contraseña incorrectos</div>
@@ -633,7 +664,7 @@ html,body { height:100%; overflow:hidden; font-family:'DM Sans',sans-serif; back
 <div class="layer off" id="L-detail">
   <div class="det-box" id="detBox">
     <div class="det-back">
-      <img id="detBackImg" src="" alt="" class="det-back-img" onerror="this.style.display='none'">
+      <img id="detBackImg" src="" alt="" class="det-back-img" onerror="this.src='';this.style.opacity='0'">
       <div class="det-back-grad"></div>
       <button class="det-close" onclick="closeDetail()">✕</button>
     </div>
@@ -710,6 +741,9 @@ html,body { height:100%; overflow:hidden; font-family:'DM Sans',sans-serif; back
       <button class="cbtn sm" id="qualBtn" onclick="togglePopup('quality')" title="Calidad">
         <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
       </button>
+      <button class="cbtn sm" onclick="toggleFill()" id="fillBtn" title="Ajuste de pantalla">
+        <svg viewBox="0 0 24 24" id="fillIco"><path d="M3 3h7v2H5v5H3V3zm11 0h7v7h-2V5h-5V3zM3 14h2v5h5v2H3v-7zm16 5h-5v2h7v-7h-2v5z"/></svg>
+      </button>
       <button class="cbtn sm" onclick="toggleFs()" id="fsBtn">
         <svg viewBox="0 0 24 24" id="fsIco"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
       </button>
@@ -727,7 +761,8 @@ const CFG = {
   imgW1280: 'https://image.tmdb.org/t/p/w1280',
   defUser:  'admin',
   defPass:  '1234',
-  tmdbKey:  '',
+  // ▼ PON TU API KEY DE TMDB AQUÍ (gratis en themoviedb.org/settings/api)
+  tmdbKey:  '3ba1079b7db0165cabfc8282f7e5d7ee',
 };
 
 /* ═══════════════════════════════════════
@@ -776,10 +811,7 @@ async function doLogin(){
   const url  = document.getElementById('inp-url').value.trim();
   const user = document.getElementById('inp-user').value.trim();
   const pass = document.getElementById('inp-pass').value;
-  const tmdb = document.getElementById('inp-tmdb').value.trim();
   const err  = document.getElementById('login-err');
-
-  if(tmdb) CFG.tmdbKey = tmdb;
   err.style.display = 'none';
 
   if(!url){ // DEMO MODE
@@ -1006,7 +1038,11 @@ async function openDetail(id, type){
   $('detSyn').textContent   = item.description||'Cargando información…';
   $('detMeta').innerHTML    = '';
   $('detGenres').innerHTML  = '';
-  $('detBackImg').src        = item.backdrop||'';
+  // Reset backdrop
+  const bImg = $('detBackImg');
+  bImg.style.opacity = '0';
+  bImg.onload = ()=>{ bImg.style.opacity='1'; };
+  bImg.src = item.backdrop||'';
   $('detEps').innerHTML     = '';
   $('detActs').innerHTML    = `
     <button class="btn-play" onclick="${type==='movie'?`playMovie('${id}')`:`scrollToEps()`}">
@@ -1021,7 +1057,14 @@ async function openDetail(id, type){
     const yr   = (td.release_date||td.first_air_date||'').split('-')[0];
     const rt   = td.vote_average? `★ ${td.vote_average.toFixed(1)}` : '';
     const mins = td.runtime? `${td.runtime} min` : (td.episode_run_time?.[0]? `~${td.episode_run_time[0]} min/ep`:'');
-    $('detBackImg').src    = item.backdrop||(td.backdrop_path? CFG.imgW1280+td.backdrop_path:'');
+    const newBack = item.backdrop||(td.backdrop_path? CFG.imgW1280+td.backdrop_path:'');
+    if(newBack){
+      const bImg2 = $('detBackImg');
+      bImg2.onload = ()=>{ bImg2.style.opacity='1'; };
+      bImg2.onerror = ()=>{ bImg2.style.opacity='0'; };
+      if(bImg2.src !== newBack) bImg2.src = newBack;
+      else bImg2.style.opacity='1';
+    }
     $('detTitle').textContent = td.title||td.name||item.title;
     $('detSyn').textContent   = item.description||td.overview||'Sin sinopsis disponible.';
     $('detMeta').innerHTML    = `
@@ -1223,6 +1266,18 @@ function setVolume(v){ const vid=$('vid'); vid.volume=v/100; vid.muted=v==0; upd
 function toggleFs(){
   if(!document.fullscreenElement) $('L-player').requestFullscreen().catch(()=>{});
   else document.exitFullscreen();
+}
+
+let vidFill = true;
+function toggleFill(){
+  vidFill = !vidFill;
+  const v=$('vid');
+  v.style.objectFit = vidFill ? 'fill' : 'contain';
+  $('fillIco').innerHTML = vidFill
+    ? '<path d="M3 3h7v2H5v5H3V3zm11 0h7v7h-2V5h-5V3zM3 14h2v5h5v2H3v-7zm16 5h-5v2h7v-7h-2v5z"/>'
+    : '<path d="M5 16H3v3a2 2 0 002 2h3v-2H5v-3zM3 8h2V5h3V3H5a2 2 0 00-2 2v3zm14 11h-3v2h3a2 2 0 002-2v-3h-2v3zM19 3h-3v2h3v3h2V5a2 2 0 00-2-2z"/>';
+  toast(vidFill ? '↔ Modo: Pantalla completa (estirado)' : '▣ Modo: Proporcional (barras)');
+  resetCtrlTimer();
 }
 
 function togglePopup(t){
