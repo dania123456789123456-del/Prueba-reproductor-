@@ -2519,43 +2519,7 @@ function buildExtMenu(){
     el.innerHTML=`<div class="ext-item"><div class="ext-name" style="color:var(--mute);padding:10px 14px;">Sin URL disponible</div></div>`;
     return;
   }
-
-  const isAnd = isAndroid();
-  const isIos = isIOS();
-  let html = '';
-
-  if(isAnd){
-    // ── Android: usar window.location.href con intent:// ──
-    // VLC — intent directo (el más compatible)
-    const vlcIntent = buildIntent(url, 'org.videolan.vlc');
-    html += extItem('🎬','VLC','Toca para abrir en VLC',   `openIntent(${JSON.stringify(vlcIntent)})`);
-
-    // MX Player Free
-    const mxIntent  = buildIntent(url, 'com.mxtech.videoplayer.ad');
-    html += extItem('▶️','MX Player','Toca para abrir en MX Player', `openIntent(${JSON.stringify(mxIntent)})`);
-
-    // MX Player Pro
-    const mxPIntent = buildIntent(url, 'com.mxtech.videoplayer.pro');
-    html += extItem('⭐','MX Player Pro','Toca para abrir en MX Pro', `openIntent(${JSON.stringify(mxPIntent)})`);
-
-    // Just Player / Otros — fallback con vlc://
-    html += extItem('📡','Abrir URL del video','Pega el link en tu app favorita',`copyVideoUrl()`);
-
-  } else if(isIos){
-    html += extItem('🎬','VLC',    'iPhone / iPad', `openIntent("vlc://"+${JSON.stringify(url)})`);
-    html += extItem('▶️','nPlayer','iPhone / iPad', `openIntent("nplayer-"+${JSON.stringify(url)})`);
-    html += extItem('📺','Infuse', 'iPhone / iPad', `openIntent("infuse://x-callback-url/play?url="+encodeURIComponent(${JSON.stringify(url)}))`);
-
-  } else {
-    // ── PC ──
-    html += extItem('🎬','VLC (escritorio)','Abre si VLC está instalado', `openIntent("vlc://"+${JSON.stringify(url)})`);
-    html += extItem('🌐','Abrir en nueva pestaña','Para copiar o arrastrar al player', `window.open(${JSON.stringify(url)},'_blank')`);
-  }
-
-  html += `<div class="ext-sep"></div>`;
-  html += extItem('📋','Copiar URL','Pegar en cualquier reproductor', `copyVideoUrl()`);
-
-  el.innerHTML = html;
+  el.innerHTML = extItem('📋','Copiar URL','Pegar en VLC, MX Player u otro reproductor', `copyVideoUrl()`);
 }
 
 /* Construye un intent:// de Android con fallback */
