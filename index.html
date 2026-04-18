@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.15, maximum-scale=1.15, user-scalable=no, viewport-fit=cover">
 <!-- Convierte automáticamente http:// → https:// para evitar mixed-content blocking en Chrome/WebView -->
 <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
 <!-- No enviar Referer al servidor de storage (evita bloqueos por hotlink) -->
@@ -846,22 +846,49 @@ html,body { height:100%; overflow:hidden; font-family:'DM Sans',sans-serif; back
 
 /* TV / pantallas grandes (> 1400px) */
 @media(min-width:1400px) {
-  :root { --sw:260px; }
-  html { font-size:17px; }
-  .grid { grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:18px; }
+  :root { --sw:270px; }
+  html { font-size:19px; }
+  .grid { grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:20px; }
   .pcard { border-radius:16px; }
-  .topbar { padding:18px 32px; }
-  .c-section { padding:28px 32px; }
-  .hero { height:clamp(320px,40vw,580px); }
-  .det-main-grid { grid-template-columns:1fr 460px; gap:44px; }
-  .ep-card { width:240px; }
+  .topbar { padding:20px 36px; }
+  .topbar-title { font-size:24px; }
+  .c-section { padding:32px 36px; }
+  .c-hdr-title { font-size:22px; }
+  .hero { height:clamp(360px,42vw,600px); }
+  .hero-ttl { font-size:clamp(26px,3.6vw,48px); }
+  .hero-desc { font-size:15px; }
+  .btn-play, .btn-info { font-size:16px; padding:14px 28px; }
+  .det-main-grid { grid-template-columns:1fr 500px; gap:48px; }
+  .det-ttl { font-size:clamp(26px,3.8vw,44px); }
+  .det-syn { font-size:15px; }
+  .ep-card { width:260px; }
+  .s-item { font-size:16px; padding:12px 16px; }
+  .s-logo-name { font-size:22px; }
 }
 
 /* TV 4K / pantallas muy grandes (> 1900px) */
 @media(min-width:1900px) {
-  html { font-size:20px; }
-  :root { --sw:300px; }
-  .grid { grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:22px; }
+  html { font-size:24px; }
+  :root { --sw:320px; }
+  .grid { grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:26px; }
+  .topbar { padding:24px 44px; }
+  .topbar-title { font-size:28px; }
+  .c-section { padding:36px 44px; }
+  .c-hdr-title { font-size:26px; }
+  .hero { height:clamp(400px,44vw,660px); }
+  .hero-ttl { font-size:clamp(30px,4vw,54px); }
+  .hero-desc { font-size:17px; }
+  .btn-play, .btn-info { font-size:18px; padding:16px 34px; border-radius:14px; }
+  .det-main-grid { grid-template-columns:1fr 560px; gap:56px; }
+  .det-ttl { font-size:clamp(30px,4vw,52px); }
+  .det-syn { font-size:17px; }
+  .ep-card { width:300px; }
+  .s-item { font-size:18px; padding:14px 18px; }
+  .s-logo-name { font-size:26px; }
+  .login-card { width:min(1000px,90vw); }
+  .login-h { font-size:34px; }
+  .fgrp input { font-size:18px; padding:15px 18px; }
+  .btn-enter { font-size:18px; padding:16px; }
 }
 </style>
 </head>
