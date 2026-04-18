@@ -246,7 +246,7 @@ html,body { height:100%; overflow:hidden; font-family:'DM Sans',sans-serif; back
 .s-bottom { margin-top:auto; padding:0 8px; border-top:1px solid rgba(255,255,255,.05); padding-top:12px; }
 
 /* MAIN */
-.main { flex:1; height:100vh; overflow-y:auto; overflow-x:hidden; scroll-behavior:smooth; }
+.main { flex:1; height:100vh; overflow-y:auto; overflow-x:hidden; scroll-behavior:smooth; display:flex; flex-direction:column; }
 .main::-webkit-scrollbar { width:5px; }
 .main::-webkit-scrollbar-thumb { background:rgba(138,92,246,.3); border-radius:3px; }
 
@@ -269,8 +269,8 @@ html,body { height:100%; overflow:hidden; font-family:'DM Sans',sans-serif; back
 .search-wrap input::placeholder { color:var(--mute); }
 
 /* HERO */
-.hero { position:relative; height:clamp(170px,26vw,280px); overflow:hidden; }
-.hero-bg { position:absolute; inset:0; background-size:cover; background-position:center; transition:opacity .7s; }
+.hero { position:relative; height:clamp(170px,26vw,280px); overflow:hidden; } .hero::after { content:""; position:absolute; bottom:0; left:0; right:0; height:3px; background:var(--ink); z-index:3; }
+.hero-bg { position:absolute; inset:0; background-size:cover; background-position:center 65%; transition:opacity .7s; }
 .hero-grad {
   position:absolute; inset:0;
   background: linear-gradient(to right, rgba(5,4,15,.96) 0%,rgba(5,4,15,.75) 38%,rgba(5,4,15,.1) 70%,transparent 100%),
@@ -303,7 +303,7 @@ html,body { height:100%; overflow:hidden; font-family:'DM Sans',sans-serif; back
 
 /* SECTIONS */
 .c-section { padding:10px 20px 18px; }
-.hero + .c-section { margin-top:-2px; }
+.hero + .c-section { margin-top:-4px; position:relative; z-index:1; }
 .c-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
 .c-hdr-lft { display:flex; align-items:center; gap:10px; }
 .c-hdr-title { font-family:'Outfit',sans-serif; font-size:17px; font-weight:800; }
@@ -416,7 +416,7 @@ html,body { height:100%; overflow:hidden; font-family:'DM Sans',sans-serif; back
 .det-dircast { margin-bottom:14px; font-size:12px; color:#a09ac0; line-height:1.75; }
 .det-dircast b { color:var(--vl); font-weight:700; margin-right:4px; }
 
-.det-syn { font-size:13.5px; line-height:1.72; color:#ccc8ee; margin-bottom:10px; display:-webkit-box; -webkit-line-clamp:5; -webkit-box-orient:vertical; overflow:hidden; }
+.det-syn { font-size:13.5px; line-height:1.72; color:#ccc8ee; margin-bottom:10px; }
 .det-acts { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:4px; }
 
 .det-btn-play {
@@ -964,7 +964,7 @@ html,body { height:100%; overflow:hidden; font-family:'DM Sans',sans-serif; back
         <input type="text" id="searchInp" placeholder="Buscar película o serie..." oninput="doSearch(this.value)">
       </div>
     </div>
-    <div id="contentArea"></div>
+    <div id="contentArea" style="flex:1;min-height:calc(100vh - 56px)"></div>
   </div>
 </div>
 
