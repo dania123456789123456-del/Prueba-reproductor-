@@ -82,9 +82,15 @@
 /* ═══════════════════════════════════════════════════════
    🎛  ZOOM PARA CELULAR/WEBVIEW — AJUSTA ESTE ÚNICO NÚMERO
    1.0=normal | 0.85=15% más chico ← punto de partida
+   ⚠ La altura se compensa automáticamente con calc(100vh/zoom)
 ═══════════════════════════════════════════════════════ */
 :root { --zoom-global: 0.85; }
-body { zoom: var(--zoom-global); }
+body {
+  zoom: var(--zoom-global);
+  /* Compensar el zoom: si zoom=0.85, necesitamos height=100vh/0.85 para cubrir toda la pantalla */
+  height: calc(100vh / var(--zoom-global));
+  min-height: calc(100vh / var(--zoom-global));
+}
 
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
 
@@ -106,7 +112,8 @@ body { zoom: var(--zoom-global); }
   --trailer-offset: 32px; /* 🎛 SUBE O BAJA EL TRAILER: cambia este número (px). Más grande = más abajo, más chico = más arriba */
 }
 
-html,body { height:100%; overflow:hidden; font-family:'DM Sans',sans-serif; background:var(--ink); color:var(--txt); }
+html { height:100%; overflow:hidden; }
+body { overflow:hidden; font-family:'DM Sans',sans-serif; background:var(--ink); color:var(--txt); }
 
 /* ── LAYERS ── */
 .layer { position:fixed; inset:0; transition:opacity .35s ease, transform .35s ease; z-index:10; }
@@ -216,11 +223,11 @@ html,body { height:100%; overflow:hidden; font-family:'DM Sans',sans-serif; back
 .login-err { display:none; color:#f87171; font-size:12px; text-align:center; margin-top:10px; }
 
 /* ═══════════════ APP SHELL ═══════════════ */
-#L-app { display:flex; background:var(--ink); height:100vh; overflow:hidden; }
+#L-app { display:flex; background:var(--ink); height:calc(100vh / var(--zoom-global)); overflow:hidden; }
 
 /* SIDEBAR */
 .sidebar {
-  width:var(--sw); min-width:var(--sw); height:100%;
+  width:var(--sw); min-width:var(--sw); height:calc(100vh / var(--zoom-global));
   background:rgba(13,12,30,0.98); backdrop-filter:blur(20px);
   border-right:1px solid var(--border);
   display:flex; flex-direction:column; padding:20px 0;
@@ -246,7 +253,7 @@ html,body { height:100%; overflow:hidden; font-family:'DM Sans',sans-serif; back
 .s-bottom { margin-top:auto; padding:0 8px; border-top:1px solid rgba(255,255,255,.05); padding-top:12px; }
 
 /* MAIN */
-.main { flex:1; height:100vh; overflow-y:auto; overflow-x:hidden; scroll-behavior:smooth; display:flex; flex-direction:column; }
+.main { flex:1; height:calc(100vh / var(--zoom-global)); overflow-y:auto; overflow-x:hidden; scroll-behavior:smooth; display:flex; flex-direction:column; }
 .main::-webkit-scrollbar { width:5px; }
 .main::-webkit-scrollbar-thumb { background:rgba(138,92,246,.3); border-radius:3px; }
 
