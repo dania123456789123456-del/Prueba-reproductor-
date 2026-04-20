@@ -2685,7 +2685,30 @@ function buildExtMenu(){
     el.innerHTML=`<div class="ext-item"><div class="ext-name" style="color:var(--mute);padding:10px 14px;">Sin URL disponible</div></div>`;
     return;
   }
-  el.innerHTML = extItem('📋','Copiar URL','Pegar en VLC, MX Player u otro reproductor', `copyVideoUrl()`);
+  const safe=url.replace(/'/g,"\\'");
+  el.innerHTML=
+    extItem('🟠','Abrir en VLC','Con audio y subtítulos completos',`openExt('VLC','${safe}')`) +
+    '<div class="ext-sep"></div>' +
+    extItem('⚫','Abrir en MX Player','Reproductor alternativo',`openExt('MXP','${safe}')`) +
+    '<div class="ext-sep"></div>' +
+    extItem('📋','Copiar URL','Pegar manualmente',`copyVideoUrl()`);
+}
+
+/* ── PUENTE KODULAR / APPINVENTOR ──────────────────────────────────
+   Prefijos de 4 chars: VLC: y MXP:  → URL siempre desde posición 5
+─────────────────────────────────────────────────────────────────── */
+function openExt(pre,url){
+  if(window.AppInventor){
+    // Kodular recibe "VLC:https://..." o "MXP:https://..."
+    window.AppInventor.setWebViewString(pre+':'+url);
+    toast('📤 Enviando a reproductor...');
+    return;
+  }
+  // Fallback intent:// para Chrome/navegador normal
+  const pkgs={VLC:'org.videolan.vlc',MXP:'com.mxtech.videoplayer.ad'};
+  const bare=url.replace(/^https?:\/\//i,'');
+  const sch=url.startsWith('https')?'https':'http';
+  window.location.href=`intent://${bare}#Intent;scheme=${sch};package=${pkgs[pre]||pkgs.VLC};end`;
 }
 
 /* Construye un intent:// de Android con fallback */
