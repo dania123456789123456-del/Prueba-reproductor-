@@ -710,6 +710,7 @@ body { overflow:hidden; font-family:'DM Sans',sans-serif; background:var(--ink);
   min-width:52px; text-align:center; font-family:'Outfit',sans-serif;
   font-size:13px; font-weight:700; color:var(--vl);
 }
+#L-load {
   position:fixed; inset:0; z-index:999;
   background:var(--ink); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px;
   transition:opacity .4s;
@@ -1248,6 +1249,11 @@ const S = {
   currentSeries: null,    // id de la serie activa (null si es película)
   currentSIdx: 0,         // índice de temporada activa
   currentEIdx: 0,         // índice de episodio activo
+  // ── VLC tracking (progreso con reproductor externo) ──
+  _vlcSaveKey: null,
+  _vlcStartTime: null,
+  _vlcPrevT: 0,
+  _vlcDur: 0,
 };
 
 /* ═══════════════════════════════════════
@@ -1667,7 +1673,6 @@ function makeHCard(item, type, poster='', rt='', yr=''){
 
 /* Carga poster desde TMDB y lo inyecta en el elemento */
 async function loadCardPoster(elId, item, type){
-  const el=$(elId); if(!el) return;
   const td = await tmdb(type==='movie'?'movie':'tv', item.tmdb_id);
   if(!td) return;
   const poster = item.poster||(td.poster_path? CFG.imgW500+td.poster_path:'');
@@ -2073,7 +2078,10 @@ function playMovie(id){
   const m = S.movies.find(x=>x.id==id); if(!m) return;
   Hist.add(id, 'movie', m.title);
   const url = (m.qualities?.[0]?.url)||m.url||'';
-  openPlayer(url, m.title, m.qualities||[], m.subtitles||[], m.audio||[], 'movie_'+id);
+  /* Leer duración desde cache TMDB (runtime está en minutos) */
+  const td = m.tmdb_id ? S.cache['movie'+m.tmdb_id] : null;
+  const durSec = td?.runtime ? td.runtime * 60 : 0;
+  openPlayer(url, m.title, m.qualities||[], m.subtitles||[], m.audio||[], 'movie_'+id, durSec);
 }
 
 function playEpisode(seriesId, sIdx, eIdx){
@@ -2086,11 +2094,16 @@ function playEpisode(seriesId, sIdx, eIdx){
   S.currentSeries = seriesId;
   S.currentSIdx   = sIdx;
   S.currentEIdx   = eIdx;
-  openPlayer(url, ttl, ep.qualities||[], ep.subtitles||[], ep.audio||[], `ep_${seriesId}_${sIdx}_${eIdx}`);
+  /* Leer duración desde cache TMDB de la temporada */
+  const seasonCache = s.tmdb_id ? S.cache[`tvS_${s.tmdb_id}_${season.season_number}`] : null;
+  const tmdbEp = seasonCache?.episodes?.find(e=>e.episode_number===ep.episode_number);
+  const durSec = tmdbEp?.runtime ? tmdbEp.runtime * 60
+               : (s.tmdb_id ? (S.cache['tv'+s.tmdb_id]?.episode_run_time?.[0]||0)*60 : 0);
+  openPlayer(url, ttl, ep.qualities||[], ep.subtitles||[], ep.audio||[], `ep_${seriesId}_${sIdx}_${eIdx}`, durSec);
   updEpNavBtns();
 }
 
-function openPlayer(url, title, qualities, subtitles, audioTracks, saveKey){
+function openPlayer(url, title, qualities, subtitles, audioTracks, saveKey, tmdbDurSec){
   if(!url){ toast('⚠ URL no configurada en el JSON'); return; }
   const bestUrl = (qualities && qualities.length) ? (qualities[0].url || url) : url;
 
@@ -2098,6 +2111,19 @@ function openPlayer(url, title, qualities, subtitles, audioTracks, saveKey){
   if(window.AppInventor){
     window.AppInventor.setWebViewString('VLC:' + bestUrl);
     toast('▶ Abriendo en VLC…');
+    // ── Guardar tiempo de inicio para "Continuar Viendo" ──
+    if(saveKey){
+      const prevProg = Progress.get(saveKey);
+      S._vlcSaveKey   = saveKey;
+      S._vlcStartTime = Date.now();
+      S._vlcPrevT     = prevProg ? (prevProg.t || 0) : 0;
+      /* Usar duración de TMDB si está disponible, si no la del progreso previo */
+      S._vlcDur       = tmdbDurSec || (prevProg ? (prevProg.dur || 0) : 0);
+      // Marcar como "visto" desde el inicio para que aparezca en el carrusel
+      if(!prevProg || prevProg.t < 10){
+        Progress.save(saveKey, 10, S._vlcDur);
+      }
+    }
     return;
   }
 
@@ -3036,6 +3062,27 @@ async function copyVideoUrl(){
     document.body.removeChild(ta);
   }
 }
+
+/* ═══════════════════════════════════════
+   VLC: CALCULAR TIEMPO AL VOLVER A LA APP
+   Cuando el usuario regresa de VLC, sumamos
+   el tiempo transcurrido al progreso guardado.
+═══════════════════════════════════════ */
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'visible' && S._vlcSaveKey && S._vlcStartTime){
+    const elapsed = Math.floor((Date.now() - S._vlcStartTime) / 1000);
+    const total   = (S._vlcPrevT || 0) + elapsed;
+    if(total >= 10){
+      Progress.save(S._vlcSaveKey, total, S._vlcDur || 0);
+      toast('⏱ Progreso guardado: ' + Math.floor(total/60) + ' min');
+    }
+    // Resetear para no acumular doble si la pantalla parpadea
+    S._vlcSaveKey   = null;
+    S._vlcStartTime = null;
+    S._vlcPrevT     = 0;
+    S._vlcDur       = 0;
+  }
+});
 
 /* ═══════════════════════════════════════
    INIT
