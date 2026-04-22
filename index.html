@@ -91,6 +91,9 @@ body {
 }
 
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+/* Evitar selección de texto en WebView */
+* { -webkit-user-select:none; user-select:none; }
+input, textarea { -webkit-user-select:text; user-select:text; }
 
 :root {
   --ink: #05040f;
@@ -938,12 +941,63 @@ body { overflow:hidden; font-family:'DM Sans',sans-serif; background:var(--ink);
 .h-card-skel .skel-txt { height:10px; border-radius:4px; margin:8px 9px 4px; width:80%; }
 .h-card-skel .skel-txt2 { height:8px; border-radius:4px; margin:0 9px 10px; width:50%; }
 
-/* ── Vacío carrusel ── */
-.h-empty { padding:18px 0; color:var(--mute); font-size:13px; }
+/* ── Modal de confirmación personalizado ── */
+#confirmModal {
+  display:none; position:fixed; inset:0; z-index:99999;
+  background:rgba(0,0,0,.72); backdrop-filter:blur(6px);
+  align-items:center; justify-content:center;
+}
+#confirmModal.on { display:flex; }
+.confirm-box {
+  background:linear-gradient(145deg,#12112a,#1b1935);
+  border:1px solid rgba(138,92,246,.35);
+  border-radius:20px; padding:28px 28px 22px;
+  width:min(340px,88vw);
+  box-shadow:0 24px 64px rgba(0,0,0,.8), 0 0 0 1px rgba(138,92,246,.12);
+  animation:cfIn .22s ease;
+}
+@keyframes cfIn { from{opacity:0;transform:scale(.92) translateY(12px)} to{opacity:1;transform:none} }
+.confirm-ico { font-size:32px; margin-bottom:12px; text-align:center; }
+.confirm-title {
+  font-family:'Outfit',sans-serif; font-size:16px; font-weight:800;
+  color:#fff; text-align:center; margin-bottom:8px;
+}
+.confirm-msg {
+  font-size:13px; color:#a09ac0; text-align:center; line-height:1.6; margin-bottom:22px;
+}
+.confirm-btns { display:flex; gap:10px; }
+.confirm-btn {
+  flex:1; padding:11px; border:none; border-radius:11px;
+  font-family:'Outfit',sans-serif; font-size:14px; font-weight:700; cursor:pointer;
+  transition:transform .15s, box-shadow .15s;
+}
+.confirm-btn:active { transform:scale(.96); }
+.confirm-btn.cancel {
+  background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12); color:#c0b8e8;
+}
+.confirm-btn.cancel:hover { background:rgba(255,255,255,.12); }
+.confirm-btn.danger {
+  background:linear-gradient(135deg,#7c1d1d,#b91c1c);
+  color:#fff; box-shadow:0 4px 16px rgba(185,28,28,.35);
+}
+.confirm-btn.danger:hover { box-shadow:0 6px 22px rgba(185,28,28,.5); }
 
 </style>
 </head>
 <body>
+
+<!-- ██ MODAL CONFIRMACIÓN ██ -->
+<div id="confirmModal">
+  <div class="confirm-box">
+    <div class="confirm-ico" id="cfIco">🗑</div>
+    <div class="confirm-title" id="cfTitle">¿Eliminar historial?</div>
+    <div class="confirm-msg" id="cfMsg">Esta acción no se puede deshacer.</div>
+    <div class="confirm-btns">
+      <button class="confirm-btn cancel" onclick="cfClose()">Cancelar</button>
+      <button class="confirm-btn danger" id="cfOkBtn" onclick="cfConfirm()">Eliminar</button>
+    </div>
+  </div>
+</div>
 
 <!-- LOADING -->
 <div id="L-load">
@@ -1537,8 +1591,15 @@ function renderContinueWatching(){
 ─────────────────────────────────────── */
 function renderRecentlyAdded(allItems){
   const sec = $('sec-recent'); if(!sec) return;
-  /* Los últimos 12 del catálogo (orden del JSON = orden de carga) */
-  const recent = [...allItems].reverse().slice(0,12);
+  /* Tomar los últimos 6 de cada tipo y combinarlos alternando
+     → el último movie Y el último serie aparecen los primeros */
+  const recentMovies = S.movies.slice(-6).reverse().map(m=>({...m,type:'movie'}));
+  const recentSeries = S.series.slice(-6).reverse().map(s=>({...s,type:'series'}));
+  const recent = [];
+  for(let i=0; i<6 && recent.length<12; i++){
+    if(i < recentMovies.length) recent.push(recentMovies[i]);
+    if(i < recentSeries.length && recent.length<12) recent.push(recentSeries[i]);
+  }
   if(!recent.length){ sec.innerHTML=''; return; }
 
   sec.innerHTML = `
@@ -1994,12 +2055,36 @@ async function renderHistory(){
   if(serItems.length) renderPosters('hist-ser', serItems, 'series');
 }
 
-function clearHistory(){
-  if(!confirm('¿Borrar todo el historial de reproducción?')) return;
-  Hist.clear();
-  renderHistory();
-  toast('🗑 Historial borrado');
+/* ═══════════════════════════════════════
+   MODAL CONFIRMACIÓN PERSONALIZADO
+═══════════════════════════════════════ */
+let _cfCallback = null;
+function cfShow(ico, title, msg, okLabel, cb){
+  $('cfIco').textContent      = ico;
+  $('cfTitle').textContent    = title;
+  $('cfMsg').textContent      = msg;
+  $('cfOkBtn').textContent    = okLabel;
+  _cfCallback = cb;
+  $('confirmModal').classList.add('on');
 }
+function cfClose(){
+  $('confirmModal').classList.remove('on');
+  _cfCallback = null;
+}
+function cfConfirm(){
+  $('confirmModal').classList.remove('on');
+  if(_cfCallback) _cfCallback();
+  _cfCallback = null;
+}
+
+function clearHistory(){
+  cfShow('🗑', '¿Borrar historial?', 'Se eliminarán todos los registros de reproducción. Esta acción no se puede deshacer.', 'Sí, borrar', ()=>{
+    Hist.clear();
+    renderHistory();
+    toast('🗑 Historial borrado');
+  });
+}
+
 
 function toggleSyn(){
   const el=$('detSyn'); const btn=$('detSynMore');
